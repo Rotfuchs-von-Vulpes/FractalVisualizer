@@ -1,21 +1,21 @@
-package main
+package main;
 
-import "core:fmt"
-import "core:strings"
-import math "core:math/linalg"
-import "vendor:glfw"
-import gl "vendor:OpenGL"
+import "core:fmt";
+import "core:strings";
+import math "core:math/linalg";
+import "vendor:glfw";
+import gl "vendor:OpenGL";
 
 Vec2 :: [2]f32;
 
 screen_width:i32 = 1000;
 screen_height:i32 = 700;
 
-VAO, VBO: u32
-shaderProgram: u32
+VAO, VBO: u32;
+shaderProgram: u32;
 
 init :: proc() {
-	lastTime = glfw.GetTime()
+	lastTime = glfw.GetTime();
 	zero:uintptr = 0;
 	// set up vertex data (and buffer(s)) and configure vertex attributes
 
@@ -60,8 +60,8 @@ title := ""
 render :: proc() {
 	currentTime := glfw.GetTime();
 	
-	p:uintptr = 0
-	zero:rawptr = &p
+	p:uintptr = 0;
+	zero:rawptr = &p;
 
 	gl.Clear(gl.COLOR_BUFFER_BIT);
 	gl.UseProgram(shaderProgram);
@@ -89,75 +89,70 @@ render :: proc() {
 }
 
 
-whell := 0.0
-rightClick := false
-leftClick := false
-wherePressed: Vec2 = {0, 0}
-canDrag := true
-mousePosition: Vec2 = {-100, -100}
-cameraTranslation: Vec2 = {0, 0}
-target: Vec2 = {0, 0}
-zoom := 184.0
+whell := 0.0;
+rightClick := false;
+leftClick := false;
+wherePressed: Vec2 = {0, 0};
+canDrag := true;
+mousePosition: Vec2 = {-100, -100};
+cameraTranslation: Vec2 = {0, 0};
+target: Vec2 = {0, 0};
+zoom := 184.0;
 
 
-lastTime: f64
-fps, nbFrames := 0, 0
+lastTime: f64;
+fps, nbFrames := 0, 0;
 
 reset :: proc "c" (window: glfw.WindowHandle)
 {
-	zoom := 184
-	cameraTranslation = {0, 0}
-	glfw.SetCursorPos(window, f64(screen_width) / 2, f64(screen_height) / 2)
+	zoom := 184;
+	cameraTranslation = {0, 0};
+	glfw.SetCursorPos(window, f64(screen_width) / 2, f64(screen_height) / 2);
 }
 
 resizeCallback :: proc "c" (window: glfw.WindowHandle, width, height: i32) {
-	screen_width = width
-	screen_height = height
-	gl.Viewport(0, 0, i32(screen_width), i32(screen_height))
-	vertexLocation := gl.GetUniformLocation(shaderProgram, "iScreen")
-	gl.Uniform2f(vertexLocation, f32(screen_width), f32(screen_height))
+	screen_width = width;
+	screen_height = height;
+	gl.Viewport(0, 0, i32(screen_width), i32(screen_height));
+	vertexLocation := gl.GetUniformLocation(shaderProgram, "iScreen");
+	gl.Uniform2f(vertexLocation, f32(screen_width), f32(screen_height));
 }
 
 scrollCallback :: proc "c" (window: glfw.WindowHandle, xoffset, yoffset: f64)
 {
-	toZoom := zoom * (0.5 * yoffset + 1)
+	toZoom := zoom * (0.5 * yoffset + 1);
 	if (toZoom > 0)
 	{
-		screen: Vec2 = {f32(screen_width / 2), f32(screen_height / 2)}
-		cameraTranslation = mousePosition + cameraTranslation - screen
-		glfw.SetCursorPos(window, f64(screen_width) / 2, f64(screen_height) / 2)
+		screen: Vec2 = {f32(screen_width / 2), f32(screen_height / 2)};
+		cameraTranslation = mousePosition + cameraTranslation - screen;
+		glfw.SetCursorPos(window, f64(screen_width) / 2, f64(screen_height) / 2);
 		cameraTranslation = cameraTranslation * f32(toZoom / zoom);
-		zoom = toZoom
+		zoom = toZoom;
 	}
 }
 
 mouseButtonCallback :: proc "c" (window: glfw.WindowHandle, button, action, mods: i32)
 {
-	if (button == glfw.MOUSE_BUTTON_LEFT && action == glfw.PRESS)
-	{
+	if (button == glfw.MOUSE_BUTTON_LEFT && action == glfw.PRESS) {
 		target = mousePosition;
 		wherePressed = cameraTranslation;
 		canDrag = true;
 	}
 
-	if (button == glfw.MOUSE_BUTTON_LEFT && action == glfw.RELEASE)
-	{
+	if (button == glfw.MOUSE_BUTTON_LEFT && action == glfw.RELEASE) {
 		canDrag = false;
 	}
 
-	if (button == glfw.MOUSE_BUTTON_MIDDLE && action == glfw.PRESS)
-	{
+	if (button == glfw.MOUSE_BUTTON_MIDDLE && action == glfw.PRESS) {
 		reset(window);
 	}
 }
 
-mouseCursorCallback :: proc "c" (window: glfw.WindowHandle, xpos, ypos: f64)
-{
+mouseCursorCallback :: proc "c" (window: glfw.WindowHandle, xpos, ypos: f64) {
 	x, y := glfw.GetCursorPos(window);
 	mousePosition = Vec2{f32(x), f32(y)};
 
-	if (canDrag && glfw.GetMouseButton(window, glfw.MOUSE_BUTTON_LEFT) != glfw.RELEASE)
-	{
+	if (canDrag && glfw.GetMouseButton(window, glfw.MOUSE_BUTTON_LEFT) != glfw.RELEASE) {
 		cameraTranslation = target - mousePosition + wherePressed;
 	}
 }
@@ -165,28 +160,27 @@ mouseCursorCallback :: proc "c" (window: glfw.WindowHandle, xpos, ypos: f64)
 
 main :: proc() {
     if !glfw.Init() {
-        fmt.print("could not init glfw")
-        return
+        fmt.print("could not init glfw");
+        return;
     }
 
-    glfw.WindowHint(glfw.OPENGL_PROFILE, glfw.OPENGL_CORE_PROFILE)
-    glfw.WindowHint(glfw.OPENGL_DEBUG_CONTEXT, glfw.TRUE)
-    glfw.WindowHint(glfw.CONTEXT_VERSION_MAJOR, 3)
-    glfw.WindowHint(glfw.CONTEXT_VERSION_MINOR, 3)
-    window := glfw.CreateWindow(screen_width, screen_height, "Title", nil, nil)
+    glfw.WindowHint(glfw.OPENGL_PROFILE, glfw.OPENGL_CORE_PROFILE);
+    glfw.WindowHint(glfw.OPENGL_DEBUG_CONTEXT, glfw.TRUE);
+    glfw.WindowHint(glfw.CONTEXT_VERSION_MAJOR, 3);
+    glfw.WindowHint(glfw.CONTEXT_VERSION_MINOR, 3);
+    window := glfw.CreateWindow(screen_width, screen_height, "Title", nil, nil);
     if window == nil {
-        fmt.print("could not create window")
-        return
+        fmt.print("could not create window");
+        return;
     }
 
-    glfw.SwapInterval(1)
-    glfw.MakeContextCurrent(window)
-	//gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
+    glfw.SwapInterval(1);
+    glfw.MakeContextCurrent(window);
 	glfw.SetCursorPosCallback(window, mouseCursorCallback);
 	glfw.SetMouseButtonCallback(window, mouseButtonCallback);
 	glfw.SetScrollCallback(window, scrollCallback);
 	glfw.SetWindowSizeCallback(window, resizeCallback);
-    gl.load_up_to(3, 3, glfw.gl_set_proc_address)
+    gl.load_up_to(3, 3, glfw.gl_set_proc_address);
 
 	init();
     
@@ -203,5 +197,5 @@ main :: proc() {
         glfw.SwapBuffers(window);
     }
 
-    glfw.DestroyWindow(window)
+    glfw.DestroyWindow(window);
 }
